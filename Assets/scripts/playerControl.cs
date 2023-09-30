@@ -6,13 +6,13 @@ using UnityEngine;
 
 public class playerControl : MonoBehaviour
 {
-    enum state
+    public enum state
     {
         move,
         dash,
     }
 
-    private state mode = state.move;
+    [HideInInspector]public state mode = state.move;
     public float speed = 5f;
     private Rigidbody2D _rigidbody2D;
     float horizontal; 
@@ -24,6 +24,8 @@ public class playerControl : MonoBehaviour
     private TrailRenderer trail;
     public AnimationCurve curve;
     public Transform firePoint;
+
+    public GameObject die;
     // Start is called before the first frame update
     void Start()
     {
@@ -34,10 +36,9 @@ public class playerControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(mode==state.move){
-            horizontal=Input.GetAxis("Horizontal");
-            vertical = Input.GetAxis("Vertical");
-        }
+        transform.localScale=Vector3.one*(1+0.1f*gamemanager.instance.scorecount);
+        horizontal=Input.GetAxis("Horizontal");
+        vertical = Input.GetAxis("Vertical");
         if (Input.GetKey(KeyCode.Mouse1) && cooldown)
         {
             mode = state.dash;
@@ -49,15 +50,19 @@ public class playerControl : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector2 move = new Vector2(horizontal * speed, vertical * speed * 0.8f);
-        _rigidbody2D.MovePosition(_rigidbody2D.position+move*Time.deltaTime);
+        if (mode == state.move)
+        {
+            Vector2 move = new Vector2(horizontal * speed, vertical * speed * 0.8f);
+            _rigidbody2D.MovePosition(_rigidbody2D.position + move * Time.deltaTime);
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.transform.tag == "enemy")
+        if (other.transform.tag == "enemy" && mode!=state.dash)
         {
-            Debug.Log("die");
+            die.SetActive(true);
+            Time.timeScale = 0;
         }
     }
     IEnumerator timerlock(float time)
@@ -73,15 +78,16 @@ public class playerControl : MonoBehaviour
     IEnumerator dash()
     {
         trail.enabled = true;
+        trail.startWidth = 1 + 0.1f * gamemanager.instance.scorecount;
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 stPos = transform.position;
-        Vector2 endPos = transform.position + (firePoint.position - transform.position).normalized * dashDistance;
+        Vector2 endPos =(Vector2) transform.position + (mousePos - stPos).normalized * dashDistance;
         for (float i = dashTime; i >= 0; i -= Time.deltaTime)
         {
-            transform.position = Vector2.Lerp(stPos,endPos, curve.Evaluate(1-i / dashTime));
-            yield return 0;
+            _rigidbody2D.MovePosition( Vector2.Lerp(stPos,endPos, curve.Evaluate(1-i / dashTime)));
+            yield return new WaitForFixedUpdate();
         }
-
-        transform.position = endPos;
+        //transform.position = endPos;
         mode = state.move;
         trail.enabled = false;
     }

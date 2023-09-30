@@ -13,6 +13,7 @@ public class shoot : MonoBehaviour
     public float fireForce=500f;
     public Transform player;
     public float fireInterval = 0.1f;
+    Vector2 targetPos=Vector2.right;
     // Start is called before the first frame update
     void Start()
     {
@@ -22,15 +23,20 @@ public class shoot : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector2 mousePos = m_camera.ScreenToWorldPoint(Input.mousePosition);
-        RotateGun(mousePos);
-        if (Input.GetKey(KeyCode.Mouse0)&&cooldown)
+        if (gamemanager.instance.minenemy != null)
         {
-            GameObject bb = Instantiate(bullet, firePoint.position, Quaternion.identity);
-            Rigidbody2D rb = bb.GetComponent<Rigidbody2D>();
-            rb.velocity = player.GetComponent<Rigidbody2D>().velocity;
-            rb.AddForce(fireForce*(firePoint.position-gunPivot.position).normalized);
-            StartCoroutine(timer(fireInterval));
+            Transform e = gamemanager.instance.minenemy;
+            targetPos = e.position;
+            RotateGun(targetPos);
+            if (e.position.x < 5f && e.position.x > -5f && e.position.y < 5f && e.position.y > -5f)
+                if (cooldown)
+                {
+                    GameObject bb = Instantiate(bullet, firePoint.position, Quaternion.identity);
+                    Rigidbody2D rb = bb.GetComponent<Rigidbody2D>();
+                    rb.velocity = player.GetComponent<Rigidbody2D>().velocity;
+                    rb.AddForce(fireForce * (firePoint.position - gunPivot.position).normalized);
+                    StartCoroutine(timer(fireInterval));
+                }
         }
     }
     void RotateGun(Vector3 lookPoint)
