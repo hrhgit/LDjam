@@ -33,23 +33,24 @@ public class enemy : MonoBehaviour
     {
         if (other.transform.tag == "bullet")
         {
-            Destroy(gameObject);
+            ToDestroy();
         }
         if (other.transform.tag == "Player")
         {
             playerControl playerControl = other.transform.GetComponent<playerControl>();
             if (playerControl.mode == playerControl.state.dash)
             {
-                Destroy(gameObject);
+                ToDestroy();
             }
             
         }
     }
 
-    private void OnDestroy()
+    void ToDestroy()
     {
         gamemanager.instance.scorecount++;
         gamemanager.instance.mindistance = 100;
         Instantiate(enemydie,transform.position,quaternion.identity);
+        Destroy(gameObject);
     }
 }
